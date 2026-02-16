@@ -1,0 +1,21 @@
+[package]
+name = "mutt-rs"
+version = "0.1.0"
+edition = "2024"
+description = "Swiss army knife for mutt/neomutt"
+license = "MIT"
+repository = "https://github.com/aladac/mutt-rs"
+
+[[bin]]
+name = "mu"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+html-to-markdown-rs = "2"
+regex = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"

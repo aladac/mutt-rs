@@ -1,0 +1,86 @@
+//! mu - Swiss army knife for mutt/neomutt
+//!
+//! Handles stdin/stdout/files for mutt integration.
+
+use anyhow::Result;
+use clap::{Parser, Subcommand};
+use std::io::{self, Read, Write};
+use std::path::PathBuf;
+
+mod render;
+
+#[derive(Parser)]
+#[command(name = "mu", version, about = "Swiss army knife for mutt/neomutt")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Render HTML email to terminal
+    Render {
+        /// Input file (reads stdin if not provided)
+        #[arg(short, long)]
+        input: Option<PathBuf>,
+
+        /// Output file (writes stdout if not provided)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+
+        /// Strip URLs from output
+        #[arg(long, default_value = "true")]
+        strip_urls: bool,
+
+        /// Output width
+        #[arg(short, long, default_value = "100")]
+        width: usize,
+    },
+    // Future commands:
+    // - sync: mbsync wrapper
+    // - search: notmuch wrapper
+    // - config: generate configs
+    // - setup: interactive setup
+}
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::Render {
+            input,
+            output,
+            strip_urls,
+            width,
+        } => {
+            let content = read_input(input.as_deref())?;
+            let rendered = render::render(&content, strip_urls, width)?;
+            write_output(output.as_deref(), &rendered)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// Read from file or stdin
+fn read_input(path: Option<&std::path::Path>) -> Result<String> {
+    match path {
+        Some(p) => Ok(std::fs::read_to_string(p)?),
+        None => {
+            let mut buf = String::new();
+            io::stdin().read_to_string(&mut buf)?;
+            Ok(buf)
+        }
+    }
+}
+
+/// Write to file or stdout
+fn write_output(path: Option<&std::path::Path>, content: &str) -> Result<()> {
+    match path {
+        Some(p) => Ok(std::fs::write(p, content)?),
+        None => {
+            io::stdout().write_all(content.as_bytes())?;
+            Ok(())
+        }
+    }
+}
