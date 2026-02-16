@@ -1,7 +1,7 @@
 //! HTML to terminal rendering
 
 use anyhow::Result;
-use html_to_markdown_rs::{convert, ConversionOptions};
+use html_to_markdown_rs::{ConversionOptions, convert};
 use regex::Regex;
 
 /// Render HTML content to clean markdown (for piping to glow/bat)
@@ -37,8 +37,8 @@ fn render_html(html: &str, strip_urls: bool) -> Result<String> {
 }
 
 fn convert_with_w3m(html: &str) -> Result<String> {
-    use std::process::{Command, Stdio};
     use std::io::Write;
+    use std::process::{Command, Stdio};
 
     let mut child = Command::new("w3m")
         .args(["-dump", "-T", "text/html", "-cols", "120"])
@@ -128,8 +128,7 @@ fn add_colors(text: &str) -> String {
         // Color section titles (lines ending with :)
         else if line.trim().ends_with(':') && line.trim().len() < 50 && !line.contains("  ") {
             result.push(format!("{}{}{}{}", BOLD, YELLOW, line, RESET));
-        }
-        else {
+        } else {
             result.push(line.to_string());
         }
 
@@ -153,14 +152,12 @@ fn is_table_row(line: &str) -> bool {
         // Check there's content after the colon with whitespace gap
         let after_colon = &trimmed[pos + 1..];
         let has_gap = after_colon.starts_with("  ") || after_colon.starts_with(" \t");
-        let has_value = after_colon.trim().len() > 0;
+        let has_value = !after_colon.trim().is_empty();
 
         // Label shouldn't be too short or contain URL-like content
         let label = &trimmed[..pos];
-        let valid_label = label.len() >= 3
-            && label.len() <= 30
-            && !label.contains("//")
-            && !label.contains("@");
+        let valid_label =
+            label.len() >= 3 && label.len() <= 30 && !label.contains("//") && !label.contains("@");
 
         return has_gap && has_value && valid_label;
     }
@@ -209,7 +206,12 @@ fn format_table(lines: &[&str]) -> String {
         let padding = box_width - vis_len - 1;
         result.push(format!(
             "{}│{} {}{}{}│{}",
-            DIM, RESET, formatted, " ".repeat(padding.max(0)), DIM, RESET
+            DIM,
+            RESET,
+            formatted,
+            " ".repeat(padding.max(0)),
+            DIM,
+            RESET
         ));
     }
 
@@ -227,16 +229,21 @@ fn visual_width(s: &str) -> usize {
 fn format_table_row(line: &str) -> String {
     // Color labels (words ending with :) in yellow
     let mut result = String::new();
-    let mut chars = line.chars().peekable();
     let mut current_word = String::new();
 
-    while let Some(c) = chars.next() {
+    for c in line.chars() {
         current_word.push(c);
 
         // Check if this ends a label (word followed by :)
         if c == ':' && !current_word.trim().is_empty() {
             let word = current_word.trim();
-            if word.len() > 1 && word.chars().next().map(|c| c.is_alphabetic()).unwrap_or(false) {
+            if word.len() > 1
+                && word
+                    .chars()
+                    .next()
+                    .map(|ch| ch.is_alphabetic())
+                    .unwrap_or(false)
+            {
                 // It's a label - color it
                 result.push_str(&format!("{}{}{}", YELLOW, word, RESET));
                 current_word.clear();
@@ -357,7 +364,8 @@ fn clean_markdown(md: &str, strip_urls: bool) -> String {
         .lines()
         .filter(|line| {
             let is_table_row = line.starts_with('|') && line.ends_with('|');
-            let is_separator = table_sep_re.is_match(line) && line.chars().filter(|c| *c == '-').count() > 2;
+            let is_separator =
+                table_sep_re.is_match(line) && line.chars().filter(|c| *c == '-').count() > 2;
 
             if is_table_row {
                 if is_separator {

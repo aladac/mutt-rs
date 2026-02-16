@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand};
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
 
+mod fzf;
 mod render;
 
 #[derive(Parser)]
@@ -32,11 +33,19 @@ enum Commands {
         #[arg(long, default_value_t = true)]
         strip_urls: bool,
     },
-    // Future commands:
-    // - sync: mbsync wrapper
-    // - search: notmuch wrapper
-    // - config: generate configs
-    // - setup: interactive setup
+
+    /// Fuzzy search mail with fzf + notmuch
+    Fzf {
+        /// Search query (default: all mail)
+        #[arg(short, long)]
+        query: Option<String>,
+    },
+
+    /// Preview a mail thread (for fzf preview window)
+    Preview {
+        /// Thread ID (e.g., thread:0000000000000123)
+        thread_id: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -51,6 +60,12 @@ fn main() -> Result<()> {
             let content = read_input(input.as_deref())?;
             let rendered = render::render(&content, strip_urls)?;
             write_output(output.as_deref(), &rendered)?;
+        }
+        Commands::Fzf { query } => {
+            fzf::search(query.as_deref())?;
+        }
+        Commands::Preview { thread_id } => {
+            fzf::preview(&thread_id)?;
         }
     }
 
