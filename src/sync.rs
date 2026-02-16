@@ -149,9 +149,10 @@ fn parse_mbsync_output(stdout: &str, stderr: &str) -> SyncStats {
                         stats.flags += num;
                     }
                 } else if let Some(n) = part.strip_prefix('-')
-                    && let Ok(num) = n.parse::<usize>() {
-                        stats.deleted += num;
-                    }
+                    && let Ok(num) = n.parse::<usize>()
+                {
+                    stats.deleted += num;
+                }
             }
         }
 
@@ -186,26 +187,26 @@ fn print_progress(current: usize, total: usize, label: &str) {
 fn get_mbsync_channels(quick: bool) -> Result<Vec<String>> {
     let home = std::env::var("HOME").unwrap_or_default();
     let config_path = format!("{}/.mbsyncrc", home);
-    let content = std::fs::read_to_string(&config_path)
-        .context("Failed to read ~/.mbsyncrc")?;
+    let content = std::fs::read_to_string(&config_path).context("Failed to read ~/.mbsyncrc")?;
 
     let mut channels = Vec::new();
     for line in content.lines() {
         if line.starts_with("Channel ")
-            && let Some(name) = line.strip_prefix("Channel ") {
-                let name = name.trim().to_string();
-                if quick {
-                    // Quick mode: only -inbox channels
-                    if name.ends_with("-inbox") {
-                        channels.push(name);
-                    }
-                } else {
-                    // Full mode: skip -inbox channels (they're subsets)
-                    if !name.ends_with("-inbox") {
-                        channels.push(name);
-                    }
+            && let Some(name) = line.strip_prefix("Channel ")
+        {
+            let name = name.trim().to_string();
+            if quick {
+                // Quick mode: only -inbox channels
+                if name.ends_with("-inbox") {
+                    channels.push(name);
+                }
+            } else {
+                // Full mode: skip -inbox channels (they're subsets)
+                if !name.ends_with("-inbox") {
+                    channels.push(name);
                 }
             }
+        }
     }
 
     if channels.is_empty() {
@@ -319,17 +320,20 @@ struct NewMessage {
 fn notify(messages: &[NewMessage]) -> Result<()> {
     let (title, message) = if messages.len() == 1 {
         let msg = &messages[0];
-        (
-            format!("New mail from {}", msg.sender),
-            msg.subject.clone(),
-        )
+        (format!("New mail from {}", msg.sender), msg.subject.clone())
     } else {
         (
             format!("{} new messages", messages.len()),
             messages
                 .iter()
                 .take(5)
-                .map(|m| format!("• {}: {}", truncate(&m.sender, 20), truncate(&m.subject, 30)))
+                .map(|m| {
+                    format!(
+                        "• {}: {}",
+                        truncate(&m.sender, 20),
+                        truncate(&m.subject, 30)
+                    )
+                })
                 .collect::<Vec<_>>()
                 .join("\n"),
         )
@@ -337,12 +341,18 @@ fn notify(messages: &[NewMessage]) -> Result<()> {
 
     Command::new("terminal-notifier")
         .args([
-            "-title", "Mail",
-            "-subtitle", &title,
-            "-message", &message,
-            "-sound", "default",
-            "-group", "mu-mail",
-            "-activate", "com.apple.Terminal",
+            "-title",
+            "Mail",
+            "-subtitle",
+            &title,
+            "-message",
+            &message,
+            "-sound",
+            "default",
+            "-group",
+            "mu-mail",
+            "-activate",
+            "com.apple.Terminal",
         ])
         .output()
         .context("Failed to send notification")?;
