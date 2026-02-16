@@ -9,6 +9,7 @@ use std::path::PathBuf;
 
 mod fzf;
 mod render;
+mod sync;
 
 #[derive(Parser)]
 #[command(name = "mu", version, about = "Swiss army knife for mutt/neomutt")]
@@ -46,6 +47,17 @@ enum Commands {
         /// Thread ID (e.g., thread:0000000000000123)
         thread_id: String,
     },
+
+    /// Sync mail (mbsync + notmuch) with notifications
+    Sync {
+        /// Quiet mode (no output, just notify)
+        #[arg(short, long)]
+        quiet: bool,
+
+        /// Quick mode (inbox only)
+        #[arg(long)]
+        quick: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -66,6 +78,9 @@ fn main() -> Result<()> {
         }
         Commands::Preview { thread_id } => {
             fzf::preview(&thread_id)?;
+        }
+        Commands::Sync { quiet, quick } => {
+            sync::sync(quiet, quick)?;
         }
     }
 
