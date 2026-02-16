@@ -18,7 +18,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Render HTML email to terminal
+    /// Render HTML email to markdown (pipe to glow for colors)
     Render {
         /// Input file (reads stdin if not provided)
         #[arg(short, long)]
@@ -29,12 +29,8 @@ enum Commands {
         output: Option<PathBuf>,
 
         /// Strip URLs from output
-        #[arg(long, default_value = "true")]
+        #[arg(long, default_value_t = true)]
         strip_urls: bool,
-
-        /// Output width
-        #[arg(short, long, default_value = "100")]
-        width: usize,
     },
     // Future commands:
     // - sync: mbsync wrapper
@@ -51,10 +47,9 @@ fn main() -> Result<()> {
             input,
             output,
             strip_urls,
-            width,
         } => {
             let content = read_input(input.as_deref())?;
-            let rendered = render::render(&content, strip_urls, width)?;
+            let rendered = render::render(&content, strip_urls)?;
             write_output(output.as_deref(), &rendered)?;
         }
     }
