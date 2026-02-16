@@ -28,11 +28,15 @@ cargo tarpaulin --skip-clean      # Must maintain 100% coverage
 src/
 ├── main.rs    # CLI entry point (clap), stdin/stdout handling
 ├── render.rs  # HTML→text rendering (w3m primary, html-to-markdown-rs fallback)
-├── fzf.rs     # Fuzzy search via fzf + notmuch
-└── sync.rs    # Mail sync via mbsync + notmuch with notifications
+├── fzf.rs     # Fuzzy search via fzf + notmuch, preview command
+└── sync.rs    # Mail sync via mbsync + notmuch with progress + notifications
 ```
 
 The binary is named `mu` (defined in Cargo.toml `[[bin]]`).
+
+## Related Projects
+
+- `/Users/chi/Projects/mutt` - NeoMutt config files (neomuttrc, account configs, install scripts)
 
 ## External Dependencies
 
