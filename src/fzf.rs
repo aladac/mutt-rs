@@ -61,7 +61,7 @@ fn run_fzf(items: &[String]) -> Result<Option<String>> {
         .args([
             "--ansi",
             "--preview",
-            "mu preview {1}",  // {1} = first field = thread ID
+            "mu preview {1}", // {1} = first field = thread ID
             "--preview-window=right:50%:wrap",
             "--header",
             "Enter: open | Esc: cancel",
@@ -186,7 +186,10 @@ pub fn preview(thread_id: &str) -> Result<()> {
             // Print key headers with colors
             if line.starts_with("Subject:") {
                 println!("\x1b[1;33m{}\x1b[0m", line);
-            } else if line.starts_with("From:") || line.starts_with("To:") || line.starts_with("Date:") {
+            } else if line.starts_with("From:")
+                || line.starts_with("To:")
+                || line.starts_with("Date:")
+            {
                 println!("{}", line);
             }
         } else if in_body && !body_printed {
@@ -196,7 +199,10 @@ pub fn preview(thread_id: &str) -> Result<()> {
     }
 
     // Print any remaining body content
-    if !body_printed && !body_content.is_empty() && body_content.trim() != "Non-text part: text/html" {
+    if !body_printed
+        && !body_content.is_empty()
+        && body_content.trim() != "Non-text part: text/html"
+    {
         print_body(&body_content, &body_type);
         body_printed = true;
     }
