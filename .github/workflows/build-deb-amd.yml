@@ -1,0 +1,40 @@
+name: build-deb-amd
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-deb-amd:
+    name: build-deb-amd
+    runs-on: ubuntu-latest
+    environment: build-deb-amd
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build
+        run: cargo build --release --target x86_64-unknown-linux-gnu
+
+      - name: Build deb
+        run: cargo deb --no-build --target x86_64-unknown-linux-gnu --output mu_amd64.deb
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mu_amd64.deb
+          path: mu_amd64.deb

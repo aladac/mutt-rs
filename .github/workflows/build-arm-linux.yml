@@ -1,0 +1,38 @@
+name: build-arm-linux
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-arm-linux:
+    name: build-arm-linux
+    runs-on: ubuntu-latest
+    environment: build-arm-linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build with cross
+        run: cross build --release --target aarch64-unknown-linux-gnu
+
+      - name: Rename binary
+        run: cp target/aarch64-unknown-linux-gnu/release/mu mu-linux-arm64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mu-linux-arm64
+          path: mu-linux-arm64

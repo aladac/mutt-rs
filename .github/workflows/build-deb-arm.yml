@@ -1,0 +1,41 @@
+name: build-deb-arm
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-deb-arm:
+    name: build-deb-arm
+    runs-on: ubuntu-latest
+    environment: build-deb-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-gnu
+
+      - name: Install cross
+        run: cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build with cross
+        run: cross build --release --target aarch64-unknown-linux-gnu
+
+      - name: Build deb
+        run: cargo deb --no-build --no-strip --target aarch64-unknown-linux-gnu --output mu_arm64.deb
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mu_arm64.deb
+          path: mu_arm64.deb
