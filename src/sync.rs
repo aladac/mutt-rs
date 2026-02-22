@@ -316,9 +316,9 @@ struct NewMessage {
     subject: String,
 }
 
-/// Send notification via terminal-notifier
+/// Send notification (platform-specific)
 fn notify(messages: &[NewMessage]) -> Result<()> {
-    let (title, message) = if messages.len() == 1 {
+    let (title, body) = if messages.len() == 1 {
         let msg = &messages[0];
         (format!("New mail from {}", msg.sender), msg.subject.clone())
     } else {
@@ -339,23 +339,34 @@ fn notify(messages: &[NewMessage]) -> Result<()> {
         )
     };
 
-    Command::new("terminal-notifier")
-        .args([
-            "-title",
-            "Mail",
-            "-subtitle",
-            &title,
-            "-message",
-            &message,
-            "-sound",
-            "default",
-            "-group",
-            "mu-mail",
-            "-activate",
-            "com.apple.Terminal",
-        ])
-        .output()
-        .context("Failed to send notification")?;
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("terminal-notifier")
+            .args([
+                "-title",
+                "Mail",
+                "-subtitle",
+                &title,
+                "-message",
+                &body,
+                "-sound",
+                "default",
+                "-group",
+                "mu-mail",
+                "-activate",
+                "com.apple.Terminal",
+            ])
+            .output()
+            .context("Failed to send notification")?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("notify-send")
+            .args(["--app-name=Mail", &title, &body])
+            .output()
+            .context("Failed to send notification")?;
+    }
 
     Ok(())
 }
